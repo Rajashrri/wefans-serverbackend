@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Celebraty = require("../controllers/celebraty-controller");
+const Moviev = require("../controllers/moviev-controller");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
@@ -12,7 +12,7 @@ router.use(express.static(path.resolve(__dirname, 'public')));
 // Multer setup for file upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = "public/celebraty";
+    const uploadDir = "public/moviev";
     if (!fs.existsSync("public")) fs.mkdirSync("public");
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
     cb(null, uploadDir);
@@ -25,33 +25,27 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Routes
-router.get("/professionsOptions", Celebraty.professionsOptions);
-router.get("/sociallist", Celebraty.sociallist);
-router.get("/professions", Celebraty.getProfessions);
 
-router.get("/languageOptions", Celebraty.languageOptions);
+router.get("/languageOptions", Moviev.languageOptions);
 // In router file
 router.post(
-  "/addcelebraty",
+  "/addmoviev",
   upload.fields([
     { name: "image", maxCount: 1 },
-    { name: "gallery", maxCount: 10 }, // ✅ allow multiple gallery uploads
   ]),
-  Celebraty.addcelebraty
+  Moviev.addMoviev
 );
-router.get("/getcelebraties", Celebraty.getdata);
+router.get("/getMoviesByCelebrity/:celebrityId", Moviev.getMoviesByCelebrity);
 
-router.get("/getcelebraties", Celebraty.getdata);
-router.patch("/update-statuscelebraty", Celebraty.updateStatus);
-router.delete("/deletecelebraty/:id", Celebraty.deletecelebraty);
-router.get("/getcelebratyByid/:id", Celebraty.getcelebratyByid);
+router.patch("/update-statusmoviev", Moviev.updateStatus);
+router.delete("/deletemoviev/:id", Moviev.deletemoviev);
+router.get("/getmovievByid/:id", Moviev.getmovievByid);
 router.patch(
-  "/updatecelebraty/:id",
+  "/updatemoviev/:id",
   upload.fields([
     { name: "image", maxCount: 1 },
-    { name: "gallery", maxCount: 10 }, // ✅ allow multiple gallery uploads
   ]),
-  Celebraty.updatecelebraty
+  Moviev.updatemoviev
 );
 
 module.exports = router;

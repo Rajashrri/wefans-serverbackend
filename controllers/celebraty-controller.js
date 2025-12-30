@@ -72,6 +72,15 @@ const getClientOptionsTable = async (req, res) => {
     });
   }
 };
+const getProfessions = async (req, res) => {
+  try {
+    const professions = await Professionalmaster.find({}, "_id name").sort({ name: 1 });
+    res.status(200).json(professions);
+  } catch (error) {
+    console.error("Error fetching professions:", error);
+    res.status(500).json({ message: "Failed to fetch professions", error });
+  }
+};
 
 const formatDateDMY = (date) => {
   const d = new Date(date);
@@ -337,4 +346,5 @@ module.exports = {
   deletecelebraty,
   getcelebratyByid,
   sociallist,
+  getProfessions
 };

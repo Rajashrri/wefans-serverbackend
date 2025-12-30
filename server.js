@@ -15,6 +15,7 @@ const languageRoute = require("./router/language-router");
 const triviaTypesRoute = require("./router/triviatypes-router");
 const socialLinkRoute = require("./router/sociallink-router");
 
+const movievRoute = require("./router/moviev-router");
 
 const celebratyRoute = require("./router/celebraty-router");
 const timelineRoute = require("./router/timeline-router");
@@ -36,7 +37,7 @@ const errorMiddleware1 = require("./middlewares/error-middleware");
 
 
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: 'https://wefans-frontend.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
 };
@@ -61,6 +62,7 @@ app.use('/professionalmaster', express.static(path.join(__dirname, 'public/profe
 app.use('/celebraty', express.static(path.join(__dirname, 'public/celebraty')));
 app.use('/timeline', express.static(path.join(__dirname, 'public/timeline')));
 app.use('/triviaentries', express.static(path.join(__dirname, 'public/triviaentries')));
+app.use('/moviev', express.static(path.join(__dirname, 'public/moviev')));
 
 app.use('/profile', express.static(path.join(__dirname, 'public/profile')));
 app.use('/testimonial', express.static(path.join(__dirname, 'public/testimonial')));
@@ -74,6 +76,7 @@ app.use("/api/triviaTypes", triviaTypesRoute);
 app.use("/api/celebraty", celebratyRoute);
 app.use("/api/timeline",timelineRoute);
 app.use("/api/triviaentries",triviaentriesRoute);
+app.use("/api/moviev", movievRoute);
 
 app.use("/api/socialLink",socialLinkRoute);
 
