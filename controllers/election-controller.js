@@ -1,7 +1,5 @@
 const { Election } = require("../models/election-model");
 const { Language } = require("../models/language-model");
-const Professionalmaster = require("../models/professionalmaster-model");
-const { SocialLink } = require("../models/sociallink-model");
 
 function createCleanUrl(title) {
   // Convert the title to lowercase

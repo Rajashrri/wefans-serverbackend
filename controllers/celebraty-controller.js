@@ -2,6 +2,10 @@ const { Celebraty } = require("../models/celebraty-model");
 const { Language } = require("../models/language-model");
 const Professionalmaster = require("../models/professionalmaster-model");
 const { SocialLink } = require("../models/sociallink-model");
+const { Moviev } = require("../models/moviev-model");
+const { Series } = require("../models/series-model");
+const { Positions } = require("../models/positions-model");
+const { Election } = require("../models/election-model");
 
 function createCleanUrl(title) {
   // Convert the title to lowercase
@@ -289,22 +293,35 @@ const getdata = async (req, res) => {
 const deletecelebraty = async (req, res) => {
   try {
     const id = req.params.id;
-    const response = await Celebraty.findOneAndDelete({ _id: id });
 
-    if (!response) {
+    // ✅ Step 1: Check if celebrity exists
+    const celeb = await Celebraty.findById(id);
+    if (!celeb) {
       return res.status(404).json({
         status: false,
-        msg: "No Data Found",
+        msg: "No Celebrity Found",
       });
     }
 
+    // ✅ Step 2: Delete all movies linked to this celebrity
+    const deletedMovies = await Moviev.deleteMany({ celebrityId: id });
+    const deletedSeries = await Series.deleteMany({ celebrityId: id });
+    const deletedElection = await Election.deleteMany({ celebrityId: id });
+    const deletedPositions = await Positions.deleteMany({ celebrityId: id });
+
+    // ✅ Step 3: Delete the celebrity itself
+    await Celebraty.findByIdAndDelete(id);
+
     return res.status(200).json({
       status: true,
-      msg: "Celebrity deleted successfully",
-      data: response,
+      msg: "Celebrity and related movies deleted successfully",
+      deletedMoviesCount: deletedMovies.deletedCount,
+       deletedSeriesCount: deletedSeries.deletedCount,
+       deletedElectionCount: deletedElection.deletedCount,
+       deletedPositionsCount: deletedPositions.deletedCount,
     });
   } catch (error) {
-    console.error("Delete celebraty error:", error);
+    console.error("❌ Delete celebraty error:", error);
     res.status(500).json({
       status: false,
       msg: "Internal Server Error",
@@ -312,7 +329,6 @@ const deletecelebraty = async (req, res) => {
     });
   }
 };
-
 
 //for edit
 
