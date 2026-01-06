@@ -39,6 +39,8 @@ const addsectionmaster = async (req, res) => {
         console.error("Invalid fieldsConfig JSON:", err);
       }
     }
+     // ✅ Convert to boolean
+    const isRepeater = is_repeater === "1" ? true : false;
     const newSectionMaster = new SectionMaster({
       name,
       slug,
