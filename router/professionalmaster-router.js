@@ -53,6 +53,7 @@ router.get("/getdata", ProfessionalController.getdata);
 router.get("/getprofessionalByid/:id", ProfessionalController.getprofessionalByid);
 router.delete("/deleteprofessional/:id", ProfessionalController.deleteprofessional);
 router.patch("/update-statusprofessional", ProfessionalController.updateStatus);
+router.get("/SectionTemplateOptions", ProfessionalController.SectionTemplateOptions);
 
 
 
