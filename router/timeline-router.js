@@ -49,7 +49,7 @@ router.patch(
   ]),
   TimelineController.updatetimeline
 );
-router.get("/getdata", TimelineController.getdata);
+router.get("/getdata/:celebrityId", TimelineController.getdata);
 router.get("/gettimelineByid/:id", TimelineController.gettimelineByid);
 router.delete("/deletetimeline/:id", TimelineController.deletetimeline);
 router.patch("/updateStatus", TimelineController.updateStatus);

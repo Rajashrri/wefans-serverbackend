@@ -30,7 +30,7 @@ router.post(
 );
 
 // Get all Trivia Entries
-router.get("/getdatatriviaentries", Triviaentries.getdatatriviaentries);
+router.get("/getdatatriviaentries/:celebrityId", Triviaentries.getdatatriviaentries);
 
 // Get Trivia Entry by ID
 router.get("/gettriviaentriesByid/:id", Triviaentries.gettriviaentriesByid);

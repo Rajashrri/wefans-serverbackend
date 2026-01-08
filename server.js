@@ -15,6 +15,9 @@ const languageRoute = require("./router/language-router");
 const triviaTypesRoute = require("./router/triviatypes-router");
 const socialLinkRoute = require("./router/sociallink-router");
 const sectiontemplateRoute = require("./router/sectiontemplate-router");
+const genreMasterRoute = require("./router/genremaster-router");
+
+
 
 const movievRoute = require("./router/moviev-router");
 const seriesRoute = require("./router/series-router");
@@ -43,8 +46,7 @@ const errorMiddleware1 = require("./middlewares/error-middleware");
 
 
 const corsOptions = {
-  origin: 'https://wefans-frontend.vercel.app',
-
+ origin: 'https://wefans-frontend.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
 };
@@ -95,6 +97,7 @@ app.use("/api/sectionmaster",sectionmasterRoute);
 app.use("/api/sectiontemplate", sectiontemplateRoute);
 
 app.use("/api/socialLink",socialLinkRoute);
+app.use("/api/genreMaster",genreMasterRoute);
 
 
 app.use("/api/profile", profileRoute);

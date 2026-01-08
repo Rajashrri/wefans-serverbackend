@@ -44,7 +44,7 @@ const addprofessional = async (req, res) => {
   try {
     console.log("Incoming Body:", req.body);
 
-    // ✅ Parse sectiontemplate if it comes as JSON string from FormData
+    // ✅ Parse sectiontemplate if it comes as JSON string
     let sectiontemplate = [];
     if (req.body.sectiontemplate) {
       try {
@@ -56,19 +56,28 @@ const addprofessional = async (req, res) => {
 
     const { name, slug, createdBy } = req.body;
     const url = createCleanUrl(name);
-
-    // ✅ Handle uploaded image
     const mainImage = req.files?.image?.[0]?.filename || "";
-
     const now = new Date();
     const createdAt = formatDateDMY(now);
 
-    // ✅ Create new Professionalmaster document
+    // ✅ Check if professionalmaster already exists (by name or slug)
+    const existingProfessional = await Professionalmaster.findOne({
+      $or: [{ name: name }, { slug: slug }],
+    });
+
+    if (existingProfessional) {
+      return res.status(400).json({
+        success: false,
+        msg: "professionalmaster already exist",
+      });
+    }
+
+    // ✅ Create new Professionalmaster
     const newProfessional = new Professionalmaster({
       name,
       slug,
       image: mainImage,
-      sectiontemplate, // ✅ Store array of sectiontemplate IDs
+      sectiontemplate,
       status: 1,
       createdAt,
       url,
@@ -91,6 +100,7 @@ const addprofessional = async (req, res) => {
     });
   }
 };
+
 
 const updateprofessional = async (req, res) => {
   try {
@@ -117,10 +127,32 @@ const updateprofessional = async (req, res) => {
         .json({ success: false, msg: "Profession master not found" });
     }
 
+    // ✅ Check for duplicate name or slug in other records
+    if (name || slug) {
+      const duplicate = await Professionalmaster.findOne({
+        $and: [
+          { _id: { $ne: professionalmasterId } }, // exclude current
+          {
+            $or: [
+              { name: name || professionalmaster.name },
+              { slug: slug || professionalmaster.slug },
+            ],
+          },
+        ],
+      });
+
+      if (duplicate) {
+        return res.status(400).json({
+          success: false,
+          msg: "professionalmaster already exist",
+        });
+      }
+    }
+
     // ✅ Update simple fields
     if (name) professionalmaster.name = name;
     if (slug) professionalmaster.slug = slug;
-    if (sectiontemplate && Array.isArray(sectiontemplate)) {
+    if (Array.isArray(sectiontemplate)) {
       professionalmaster.sectiontemplate = sectiontemplate;
     }
 
@@ -160,6 +192,7 @@ const updateprofessional = async (req, res) => {
     });
   }
 };
+
 // Update status
 const updateStatus = async (req, res) => {
   try {

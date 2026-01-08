@@ -1,4 +1,4 @@
-const { TriviaTypes } = require("../models/triviatypes-model");
+const { GenreMaster } = require("../models/genremaster-model");
 
 function createCleanUrl(title) {
   // Convert the title to lowercase
@@ -23,7 +23,7 @@ const formatDateDMY = (date) => {
 };
 // -----------Category Features------------------
 //add fixed item
-const addTriviaTypes = async (req, res) => {
+const addGenreMaster = async (req, res) => {
   try {
     const { name, createdBy } = req.body;
     const status = "1";
@@ -31,20 +31,20 @@ const addTriviaTypes = async (req, res) => {
     const now = new Date();
     const createdAt = formatDateDMY(now);
 
-    // 🔹 Check if category already exists (case-insensitive)
-    const existingCategory = await TriviaTypes.findOne({
+    // 🔹 Check if name already exists (case-insensitive)
+    const existingCategory = await GenreMaster.findOne({
       name: { $regex: new RegExp(`^${name}$`, "i") },
     });
 
     if (existingCategory) {
       return res.status(400).json({
         success: false,
-        msg: "Name already exist", // ✅ Match frontend check
+        msg: "Name already exist", // ✅ match frontend
       });
     }
 
-    // ✅ Create new category
-    const newCategory = await TriviaTypes.create({
+    // 🔹 Create new record
+    const newCategory = await GenreMaster.create({
       name,
       status,
       createdBy,
@@ -54,12 +54,11 @@ const addTriviaTypes = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      msg: "Category created successfully",
+      msg: "Social link created successfully",
       data: newCategory,
-      userId: newCategory._id.toString(),
     });
   } catch (error) {
-    console.error("Add Category Error:", error);
+    console.error("Add GenreMaster Error:", error);
     return res.status(500).json({
       success: false,
       msg: "Server error",
@@ -68,9 +67,9 @@ const addTriviaTypes = async (req, res) => {
   }
 };
 
-const getdataTriviaTypes = async (req, res) => {
+const getdataGenreMaster = async (req, res) => {
   try {
-    const response = await TriviaTypes.find();
+    const response = await GenreMaster.find();
     if (!response) {
       res.status(404).json({ msg: "No Data Found" });
       return;
@@ -82,10 +81,10 @@ const getdataTriviaTypes = async (req, res) => {
   }
 };
 
-const getTriviaTypesByid = async (req, res) => {
+const getGenreMasterByid = async (req, res) => {
   const id = req.params.id;
   try {
-    const response = await TriviaTypes.find({ _id: id });
+    const response = await GenreMaster.find({ _id: id });
     if (!response) {
       res.status(404).json({ msg: "No Data Found" });
       return;
@@ -103,13 +102,15 @@ const updateCategory = async (req, res) => {
     const id = req.params.id;
     const { name } = req.body;
 
-    const existingCategory = await TriviaTypes.findById(id);
+    const existingCategory = await GenreMaster.findById(id);
     if (!existingCategory) {
-      return res.status(404).json({ success: false, msg: "Category not found" });
+      return res
+        .status(404)
+        .json({ success: false, msg: "Social link not found" });
     }
 
-    // 🔹 Check for duplicate (case-insensitive, excluding current record)
-    const duplicate = await TriviaTypes.findOne({
+    // 🔹 Check for duplicate name (excluding current record)
+    const duplicate = await GenreMaster.findOne({
       name: { $regex: new RegExp(`^${name}$`, "i") },
       _id: { $ne: id },
     });
@@ -117,24 +118,24 @@ const updateCategory = async (req, res) => {
     if (duplicate) {
       return res.status(400).json({
         success: false,
-        msg: "Name already exist", // ✅ Match frontend
+        msg: "Name already exist", // ✅ match frontend
       });
     }
 
     const url = createCleanUrl(name);
 
-    const result = await TriviaTypes.updateOne(
+    const result = await GenreMaster.updateOne(
       { _id: id },
       { $set: { name, url } }
     );
 
     return res.status(200).json({
       success: true,
-      msg: "Category updated successfully",
+      msg: "Social link updated successfully",
       result,
     });
   } catch (error) {
-    console.error("Error updating category:", error);
+    console.error("Error updating GenreMaster:", error);
     return res.status(500).json({
       success: false,
       msg: "Server error",
@@ -143,12 +144,11 @@ const updateCategory = async (req, res) => {
   }
 };
 
-
 const updateStatusCategory = async (req, res) => {
   try {
     const { status, id } = req.body;
 
-    const result = await TriviaTypes.updateOne(
+    const result = await GenreMaster.updateOne(
       { _id: id },
       {
         $set: {
@@ -167,12 +167,12 @@ const updateStatusCategory = async (req, res) => {
   }
 };
 
-const deleteTriviaTypes = async (req, res) => {
+const deleteGenreMaster = async (req, res) => {
   try {
     const id = req.params.id;
 
     // 1. Find the role
-    const role = await TriviaTypes.findById(id);
+    const role = await GenreMaster.findById(id);
     if (!role) {
       return res.status(404).json({ msg: "Role not found" });
     }
@@ -180,7 +180,7 @@ const deleteTriviaTypes = async (req, res) => {
     // 2. Delete related privileges
 
     // 3. Delete the role itself
-    const deleted = await TriviaTypes.findByIdAndDelete(id);
+    const deleted = await GenreMaster.findByIdAndDelete(id);
 
     res
       .status(200)
@@ -208,11 +208,11 @@ const categoryOptions = async (req, res) => {
 };
 
 module.exports = {
-  addTriviaTypes,
-  getdataTriviaTypes,
-  getTriviaTypesByid,
+  addGenreMaster,
+  getdataGenreMaster,
+  getGenreMasterByid,
   updateCategory,
-  deleteTriviaTypes,
+  deleteGenreMaster,
   categoryOptions,
   updateStatusCategory,
 };

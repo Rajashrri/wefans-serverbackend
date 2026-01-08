@@ -11,7 +11,7 @@ const timelinechema = new Schema({
     media: { type: String },
   from_year: { type: String },
    to_year: { type: String },
-
+celebrityId: { type: String }, // movie title
 });
 
 module.exports = model('timeline', timelinechema); // ✅ default export

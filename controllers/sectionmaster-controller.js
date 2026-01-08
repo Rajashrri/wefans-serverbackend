@@ -28,23 +28,31 @@ const addsectionmaster = async (req, res) => {
   try {
     const { name, slug, createdBy, layout, fieldsConfig, is_repeater } =
       req.body;
-    const url = createCleanUrl(req.body.name);
-
-    // Handle uploaded media file
-
+    const url = createCleanUrl(name);
     const now = new Date();
     const createdAt = formatDateDMY(now);
-    // 🧩 Parse fields configuration (if provided)
-    // 🧩 Parse fields configuration (if provided)
+
+    // 🔹 Check if SectionMaster already exists (case-insensitive)
+    const existing = await SectionMaster.findOne({
+      $or: [
+        { name: { $regex: new RegExp(`^${name}$`, "i") } },
+        { slug: { $regex: new RegExp(`^${slug}$`, "i") } },
+      ],
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        msg: "sectionmaster already exist", // ✅ matches frontend check
+      });
+    }
+
+    // 🔹 Parse fieldsConfig if provided
     let parsedFields = [];
     if (fieldsConfig) {
       try {
-        parsedFields = JSON.parse(fieldsConfig);
-
-        // ✅ Normalize options if present
-        parsedFields = parsedFields.map((field) => {
+        parsedFields = JSON.parse(fieldsConfig).map((field) => {
           if (Array.isArray(field.options)) {
-            // convert ["A", "B"] → [{label:"A", value:"a"}, {label:"B", value:"b"}]
             field.options = field.options
               .filter((opt) => opt && typeof opt === "string")
               .map((opt) => ({
@@ -52,7 +60,7 @@ const addsectionmaster = async (req, res) => {
                 value: opt.trim().toLowerCase().replace(/\s+/g, "_"),
               }));
           } else {
-            field.options = []; // ensure it's always an array
+            field.options = [];
           }
           return field;
         });
@@ -60,24 +68,23 @@ const addsectionmaster = async (req, res) => {
         console.error("Invalid fieldsConfig JSON:", err);
       }
     }
-    // ✅ Convert to boolean
-    const isRepeater = is_repeater === "1" ? true : false;
+
+    const isRepeater = is_repeater === "1";
     const newSectionMaster = new SectionMaster({
       name,
       slug,
-      fieldsConfig: parsedFields, // <-- store parsed fields array
-      status: 1, // default active
+      layout,
+      isRepeater,
+      createdBy,
+      fieldsConfig: parsedFields,
+      status: 1,
       createdAt,
       url,
-      layout,
-      isRepeater, // ✅ Save boolean flag in DB
-      createdBy,
     });
 
     await newSectionMaster.save();
 
-    // ✅ Include success flag
-    return res.json({
+    return res.status(201).json({
       success: true,
       msg: "SectionMaster added successfully",
       data: newSectionMaster,
@@ -94,34 +101,49 @@ const addsectionmaster = async (req, res) => {
 
 const updatesectionmaster = async (req, res) => {
   try {
+    const id = req.params.id;
     const { name, slug, layout, fieldsConfig, is_repeater } = req.body;
-    const sectionmasterId = req.params.id;
 
-    const sectionmaster = await SectionMaster.findById(sectionmasterId);
+    const sectionmaster = await SectionMaster.findById(id);
     if (!sectionmaster) {
       return res
         .status(404)
         .json({ success: false, msg: "SectionMaster not found" });
-    } // ✅ Update repeater flag if provided
+    }
+
+    // 🔹 Check for duplicate name or slug (excluding current ID)
+    const duplicate = await SectionMaster.findOne({
+      $or: [
+        { name: { $regex: new RegExp(`^${name}$`, "i") } },
+        { slug: { $regex: new RegExp(`^${slug}$`, "i") } },
+      ],
+      _id: { $ne: id },
+    });
+
+    if (duplicate) {
+      return res.status(400).json({
+        success: false,
+        msg: "sectionmaster already exist", // ✅ consistent with frontend
+      });
+    }
+
+    // 🔹 Update isRepeater flag
     if (typeof is_repeater !== "undefined") {
       sectionmaster.isRepeater = is_repeater === "1";
     }
 
-    // ✅ Update basic fields
     if (name) sectionmaster.name = name;
     if (slug) sectionmaster.slug = slug;
     if (layout) sectionmaster.layout = layout;
 
-    // 🧩 Handle fieldsConfig (with normalization)
+    // 🔹 Parse and normalize fieldsConfig if provided
     if (fieldsConfig) {
       try {
         let parsedFields = JSON.parse(fieldsConfig).map((f) => ({
           ...f,
-          // ensure boolean for isRequired
           isRequired: f.isRequired === true || f.isRequired === "true",
         }));
 
-        // ✅ Normalize options for select fields
         parsedFields = parsedFields.map((field) => {
           if (Array.isArray(field.options)) {
             field.options = field.options
@@ -146,7 +168,6 @@ const updatesectionmaster = async (req, res) => {
       }
     }
 
-    // ✅ Updated date and user (optional)
     if (req.body.updatedBy) {
       sectionmaster.updatedBy = req.body.updatedBy;
       sectionmaster.updatedAt = new Date();
@@ -168,6 +189,7 @@ const updatesectionmaster = async (req, res) => {
     });
   }
 };
+
 // Update status
 const updateStatus = async (req, res) => {
   try {

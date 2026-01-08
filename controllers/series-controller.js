@@ -1,5 +1,6 @@
 const { Series } = require("../models/series-model");
 const { Language } = require("../models/language-model");
+const { GenreMaster } = require("../models/genremaster-model");
 
 function createCleanUrl(title) {
   // Convert the title to lowercase
@@ -39,6 +40,18 @@ const formatDateDMY = (date) => {
 
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 };
+// ✅ Get category dropdown options
+const GenreMasterOptions = async (req, res) => {
+  try {
+    const categories = await GenreMaster.find({ status: 1 });
+    if (!categories.length)
+      return res.status(404).json({ msg: "No categories found" });
+    res.status(200).json({ msg: categories });
+  } catch (error) {
+    console.error("Category Fetch Error:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
 
 const addSeries = async (req, res) => {
   try {
@@ -54,7 +67,7 @@ const addSeries = async (req, res) => {
       end_year,
       notes,
       statusseries,
-
+      genre,
       celebrityId, // series belongs to this celebrity
       createdBy,
       watchLinks, // ✅ new field from frontend
@@ -121,6 +134,7 @@ const addSeries = async (req, res) => {
       notes,
       start_year,
       end_year,
+      genre,
       celebrityId,
       image: profileImage,
       watchLinks: parsedWatchLinks, // ✅ save in MongoDB
@@ -191,6 +205,7 @@ const updateSeries = async (req, res) => {
       seasons,
       statusseries,
       sort,
+      genre,
       statusnew,
     } = req.body;
 
@@ -274,6 +289,7 @@ const updateSeries = async (req, res) => {
       director,
       end_year,
       platform,
+      genre,
       notes,
       statusseries,
       sort,
@@ -376,4 +392,5 @@ module.exports = {
   getSeriesByCelebrity,
   deleteseries,
   getseriesByid,
+  GenreMasterOptions,
 };

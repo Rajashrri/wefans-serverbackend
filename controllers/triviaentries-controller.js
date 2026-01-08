@@ -27,7 +27,7 @@ function formatDateDMY(date) {
 // ✅ Add Trivia Entry
 const addtriviaentries = async (req, res) => {
   try {
-    const { category_id, category_name, title, description, source_link, createdBy } = req.body;
+    const { category_id, category_name, title, description, source_link, createdBy,celebrityId } = req.body;
 
     if (!title || !category_id) {
       return res.status(400).json({ msg: "Title and Category are required" });
@@ -47,6 +47,7 @@ const addtriviaentries = async (req, res) => {
       createdBy,
       url,
       createdAt,
+        celebrityId, // movie belongs to this celebrity
       status: 1,
     });
 
@@ -73,7 +74,8 @@ const categoryOptions = async (req, res) => {
 // ✅ Get all trivia entries
 const getdatatriviaentries = async (req, res) => {
   try {
-    const data = await Triviaentries.find();
+     const { celebrityId } = req.params;
+    const data = await Triviaentries.find({ celebrityId });
     if (!data.length) return res.status(404).json({ msg: "No entries found" });
     res.status(200).json({ msg: data });
   } catch (error) {

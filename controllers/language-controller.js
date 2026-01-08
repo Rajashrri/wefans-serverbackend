@@ -27,30 +27,48 @@ const addlanguage = async (req, res) => {
   try {
     console.log("Request Body:", req.body);
 
-    const { name,code, createdBy } = req.body;
+    const { name, code, createdBy } = req.body;
     const status = "1";
     const url = createCleanUrl(name);
-const now = new Date(); // ✅ Define now
-    const createdAt = formatDateDMY(now); // 👈 formatted date
-    // ✅ Check if category already exists
-    const existingCategory = await Language.findOne({ name });
-    if (existingCategory) {
-      return res.status(400).json({ msg: "Category already exist" }); // ✅ Match frontend
+    const now = new Date();
+    const createdAt = formatDateDMY(now);
+
+    // ✅ Check if language with same name OR code already exists
+    const existingLanguage = await Language.findOne({
+      $or: [{ name: name.trim() }, { code: code.trim() }],
+    });
+
+    if (existingLanguage) {
+      let field = existingLanguage.name === name ? "Name" : "Code";
+      return res.status(400).json({
+        success: false,
+        msg: `${field} already exist`,
+      });
     }
 
-    // ✅ Create new category
-    const newCategory = await Language.create({ name, code,status, createdBy, url, createdAt, });
+    // ✅ Create new language
+    const newLanguage = await Language.create({
+      name,
+      code,
+      status,
+      createdBy,
+      url,
+      createdAt,
+    });
 
     return res.status(201).json({
-      msg: "Language+- created successfully",
-      data: newCategory,
-      userId: newCategory._id.toString(),
+      success: true,
+      msg: "Language created successfully",
+      data: newLanguage,
     });
   } catch (error) {
     console.error("Add Language Error:", error);
-    return res.status(500).json({ msg: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ success: false, msg: "Server error", error: error.message });
   }
 };
+
 const getdatalanguage = async (req, res) => {
   try {
     const response = await Language.find();
@@ -84,31 +102,31 @@ const getlanguageByid = async (req, res) => {
 const updateCategory = async (req, res) => {
   try {
     const id = req.params.id;
-    const { name,code } = req.body;
+    const { name, code } = req.body;
 
-    // 🔹 Step 1: Find existing category by ID
-    const existingCategory = await Language.findById(id);
-    if (!existingCategory) {
-      return res.status(404).json({ msg: "Language not found" });
+    const existingLanguage = await Language.findById(id);
+    if (!existingLanguage) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Language not found" });
     }
 
-    // 🔹 Step 2: Check for duplicate category name (case-insensitive)
+    // ✅ Check duplicate name or code (excluding current id)
     const duplicate = await Language.findOne({
-      name: { $regex: new RegExp(`^${name}$`, "i") }, // case insensitive
-      _id: { $ne: id }, // exclude current category
+      $or: [{ name: name.trim() }, { code: code.trim() }],
+      _id: { $ne: id },
     });
 
     if (duplicate) {
+      const field = duplicate.name === name ? "Name" : "Code";
       return res.status(400).json({
         success: false,
-        msg: "Language already exist",
+        msg: `${field} already exist`,
       });
     }
 
-    // 🔹 Step 3: Generate clean URL
     const url = createCleanUrl(name);
 
-    // 🔹 Step 4: Update category
     const result = await Language.updateOne(
       { _id: id },
       { $set: { name, code, url } }
@@ -128,7 +146,6 @@ const updateCategory = async (req, res) => {
     });
   }
 };
-
 
 const updateStatusCategory = async (req, res) => {
   try {

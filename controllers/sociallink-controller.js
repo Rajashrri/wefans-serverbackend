@@ -25,32 +25,48 @@ const formatDateDMY = (date) => {
 //add fixed item
 const addSocialLink = async (req, res) => {
   try {
-    console.log("Request Body:", req.body);
-
     const { name, createdBy } = req.body;
     const status = "1";
     const url = createCleanUrl(name);
-const now = new Date(); // ✅ Define now
-    const createdAt = formatDateDMY(now); // 👈 formatted date
-    // ✅ Check if category already exists
-    const existingCategory = await SocialLink.findOne({ name });
+    const now = new Date();
+    const createdAt = formatDateDMY(now);
+
+    // 🔹 Check if name already exists (case-insensitive)
+    const existingCategory = await SocialLink.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") },
+    });
+
     if (existingCategory) {
-      return res.status(400).json({ msg: "Category already exist" }); // ✅ Match frontend
+      return res.status(400).json({
+        success: false,
+        msg: "Name already exist", // ✅ match frontend
+      });
     }
 
-    // ✅ Create new category
-    const newCategory = await SocialLink.create({ name, status, createdBy, url, createdAt, });
+    // 🔹 Create new record
+    const newCategory = await SocialLink.create({
+      name,
+      status,
+      createdBy,
+      url,
+      createdAt,
+    });
 
     return res.status(201).json({
-      msg: "Category created successfully",
+      success: true,
+      msg: "Social link created successfully",
       data: newCategory,
-      userId: newCategory._id.toString(),
     });
   } catch (error) {
-    console.error("Add Category Error:", error);
-    return res.status(500).json({ msg: "Server error", error: error.message });
+    console.error("Add SocialLink Error:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Server error",
+      error: error.message,
+    });
   }
 };
+
 const getdataSocialLink = async (req, res) => {
   try {
     const response = await SocialLink.find();
@@ -86,29 +102,28 @@ const updateCategory = async (req, res) => {
     const id = req.params.id;
     const { name } = req.body;
 
-    // 🔹 Step 1: Find existing category by ID
     const existingCategory = await SocialLink.findById(id);
     if (!existingCategory) {
-      return res.status(404).json({ msg: "Category not found" });
+      return res
+        .status(404)
+        .json({ success: false, msg: "Social link not found" });
     }
 
-    // 🔹 Step 2: Check for duplicate category name (case-insensitive)
+    // 🔹 Check for duplicate name (excluding current record)
     const duplicate = await SocialLink.findOne({
-      name: { $regex: new RegExp(`^${name}$`, "i") }, // case insensitive
-      _id: { $ne: id }, // exclude current category
+      name: { $regex: new RegExp(`^${name}$`, "i") },
+      _id: { $ne: id },
     });
 
     if (duplicate) {
       return res.status(400).json({
         success: false,
-        msg: "Category already exist",
+        msg: "Name already exist", // ✅ match frontend
       });
     }
 
-    // 🔹 Step 3: Generate clean URL
     const url = createCleanUrl(name);
 
-    // 🔹 Step 4: Update category
     const result = await SocialLink.updateOne(
       { _id: id },
       { $set: { name, url } }
@@ -116,11 +131,11 @@ const updateCategory = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      msg: "Category updated successfully",
+      msg: "Social link updated successfully",
       result,
     });
   } catch (error) {
-    console.error("Error updating category:", error);
+    console.error("Error updating SocialLink:", error);
     return res.status(500).json({
       success: false,
       msg: "Server error",
@@ -128,7 +143,6 @@ const updateCategory = async (req, res) => {
     });
   }
 };
-
 
 const updateStatusCategory = async (req, res) => {
   try {

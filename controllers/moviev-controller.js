@@ -1,6 +1,6 @@
 const { Moviev } = require("../models/moviev-model");
 const { Language } = require("../models/language-model");
-
+const { GenreMaster } = require("../models/genremaster-model");
 
 function createCleanUrl(title) {
   // Convert the title to lowercase
@@ -12,6 +12,18 @@ function createCleanUrl(title) {
   return cleanTitle;
 }
 
+// ✅ Get category dropdown options
+const GenreMasterOptions = async (req, res) => {
+  try {
+    const categories = await GenreMaster.find({ status: 1 });
+    if (!categories.length)
+      return res.status(404).json({ msg: "No categories found" });
+    res.status(200).json({ msg: categories });
+  } catch (error) {
+    console.error("Category Fetch Error:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
 
 //add project
 const languageOptions = async (req, res) => {
@@ -29,9 +41,6 @@ const languageOptions = async (req, res) => {
     console.log(`Language ${error}`);
   }
 };
-
-
-
 
 const formatDateDMY = (date) => {
   const d = new Date(date);
@@ -57,6 +66,7 @@ const addMoviev = async (req, res) => {
       director,
       producer,
       cast,
+      genre,
       notes,
       rating,
       platform_rating,
@@ -100,10 +110,7 @@ const addMoviev = async (req, res) => {
       parsedLanguages = Array.isArray(languages) ? languages : [];
     }
 
-
-
-
-let parsedWatchLinks = [];
+    let parsedWatchLinks = [];
     try {
       parsedWatchLinks = watchLinks ? JSON.parse(watchLinks) : [];
     } catch (err) {
@@ -122,6 +129,7 @@ let parsedWatchLinks = [];
       cast,
       notes,
       rating,
+      genre,
       platform_rating,
       celebrityId,
       image: profileImage,
@@ -143,10 +151,11 @@ let parsedWatchLinks = [];
     });
   } catch (error) {
     console.error("Add Moviev Error:", error);
-    res.status(500).json({ status: false, msg: "Internal Server Error", error });
+    res
+      .status(500)
+      .json({ status: false, msg: "Internal Server Error", error });
   }
 };
-
 
 //update status
 
@@ -192,6 +201,7 @@ const updatemoviev = async (req, res) => {
       old_image,
       watchLinks,
       awards,
+      genre,
       sort,
       statusnew,
     } = req.body;
@@ -219,7 +229,10 @@ const updatemoviev = async (req, res) => {
     let parsedWatchLinks = [];
     try {
       if (typeof watchLinks === "string") {
-        if (watchLinks.trim().startsWith("[") && watchLinks.trim().endsWith("]")) {
+        if (
+          watchLinks.trim().startsWith("[") &&
+          watchLinks.trim().endsWith("]")
+        ) {
           parsedWatchLinks = JSON.parse(watchLinks);
         } else {
           parsedWatchLinks = [];
@@ -250,6 +263,7 @@ const updatemoviev = async (req, res) => {
       producer,
       cast,
       notes,
+      genre,
       rating,
       platform_rating,
       awards,
@@ -262,7 +276,11 @@ const updatemoviev = async (req, res) => {
     if (profileImage) updateData.image = profileImage;
     else if (old_image) updateData.image = old_image;
 
-    const result = await Moviev.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+    const result = await Moviev.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    );
 
     if (!result) {
       return res.status(404).json({ status: false, msg: "Movie not found" });
@@ -279,11 +297,9 @@ const updatemoviev = async (req, res) => {
   }
 };
 
-
-
 //get table data
 
- const getMoviesByCelebrity = async (req, res) => {
+const getMoviesByCelebrity = async (req, res) => {
   try {
     const { celebrityId } = req.params;
     const movies = await Moviev.find({ celebrityId });
@@ -323,7 +339,6 @@ const deletemoviev = async (req, res) => {
   }
 };
 
-
 //for edit
 
 // backend: controller
@@ -343,9 +358,6 @@ const getmovievByid = async (req, res) => {
   }
 };
 
-
-
-
 module.exports = {
   addMoviev,
   languageOptions,
@@ -354,4 +366,5 @@ module.exports = {
   getMoviesByCelebrity,
   deletemoviev,
   getmovievByid,
+  GenreMasterOptions,
 };

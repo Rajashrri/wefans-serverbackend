@@ -5,9 +5,9 @@ const movievSchema = new Schema({
   title: { type: String, required: true }, // movie title
   release_year: { type: String },
   release_date: { type: String },
-
+ role: { type: String }, // actor’s character name
   // 🧑‍🎭 Role Details
-  role: { type: String }, // actor’s character name
+  genre: { type: String }, // actor’s character name
   role_type: {
     type: String,
     

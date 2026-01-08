@@ -13,6 +13,7 @@ const triviaentriesSchema = new Schema(
     // Optional fields
     media: { type: String },         // uploaded file (image/video)
     source_link: { type: String },   // external source link
+  celebrityId: { type: String }, // movie title
 
     // System fields
     createdBy: { type: String },

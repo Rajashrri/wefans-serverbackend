@@ -39,7 +39,7 @@ const seriesSchema = new Schema({
   // 🔗 SEO / Status
   url: { type: String },
   status: { type: String, default: "1" },
-
+  genre: { type: String }, // actor’s character name
   watchLinks: [
     {
       platform: { type: String, trim: true },

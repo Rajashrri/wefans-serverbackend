@@ -36,6 +36,7 @@ router.post(
   Series.addSeries
 );
 router.get("/getSeriesByCelebrity/:celebrityId", Series.getSeriesByCelebrity);
+router.get("/GenreMasterOptions", Series.GenreMasterOptions);
 
 router.patch("/update-statusseries", Series.updateStatus);
 router.delete("/deleteseries/:id", Series.deleteseries);

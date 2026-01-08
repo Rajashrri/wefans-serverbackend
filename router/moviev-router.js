@@ -36,6 +36,7 @@ router.post(
   Moviev.addMoviev
 );
 router.get("/getMoviesByCelebrity/:celebrityId", Moviev.getMoviesByCelebrity);
+router.get("/GenreMasterOptions", Moviev.GenreMasterOptions);
 
 router.patch("/update-statusmoviev", Moviev.updateStatus);
 router.delete("/deletemoviev/:id", Moviev.deletemoviev);

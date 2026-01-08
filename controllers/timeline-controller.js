@@ -3,7 +3,10 @@ const fs = require("fs");
 const path = require("path");
 // Utility: Create clean URL from title
 function createCleanUrl(title) {
-  let cleanTitle = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+  let cleanTitle = title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-");
   return cleanTitle;
 }
 
@@ -23,11 +26,14 @@ const formatDateDMY = (date) => {
 // Create new timeline
 const addtimeline = async (req, res) => {
   try {
-    const { title, description, createdBy, from_year, to_year } = req.body;
+    const { title, description, createdBy, from_year, to_year, celebrityId } =
+      req.body;
     const url = createCleanUrl(req.body.title);
 
     // Handle uploaded media file
-    const mainImage = req.files?.["media"] ? req.files["media"][0].filename : "";
+    const mainImage = req.files?.["media"]
+      ? req.files["media"][0].filename
+      : "";
 
     const now = new Date();
     const createdAt = formatDateDMY(now);
@@ -41,6 +47,7 @@ const addtimeline = async (req, res) => {
       url,
       from_year,
       to_year,
+      celebrityId, // movie belongs to this celebrity
       createdBy,
     });
 
@@ -62,10 +69,9 @@ const addtimeline = async (req, res) => {
   }
 };
 
-
 const updatetimeline = async (req, res) => {
   try {
-    const { title,description,from_year,to_year } = req.body;
+    const { title, description, from_year, to_year } = req.body;
     const timelineId = req.params.id;
 
     const timeline = await Timeline.findById(timelineId);
@@ -75,9 +81,9 @@ const updatetimeline = async (req, res) => {
 
     // ✅ Update name
     if (title) timeline.title = title;
-if (description) timeline.description = description;
-if (from_year) timeline.from_year = from_year;
-if (to_year) timeline.to_year = to_year;
+    if (description) timeline.description = description;
+    if (from_year) timeline.from_year = from_year;
+    if (to_year) timeline.to_year = to_year;
 
     // ✅ Handle file upload
     const newImageFile =
@@ -86,7 +92,11 @@ if (to_year) timeline.to_year = to_year;
     if (newImageFile) {
       // delete old image if exists
       if (timeline.media) {
-        const oldPath = path.join(__dirname, "../public/timeline/", timeline.media);
+        const oldPath = path.join(
+          __dirname,
+          "../public/timeline/",
+          timeline.media
+        );
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
 
@@ -109,7 +119,7 @@ const updateStatus = async (req, res) => {
 
     await Timeline.updateOne({ _id: id }, { $set: { status } }, { new: true });
 
-    res.status(200).json({ msg: 'Status updated successfully' });
+    res.status(200).json({ msg: "Status updated successfully" });
   } catch (error) {
     res.status(500).json({ msg: "Server Error", error: error.message });
   }
@@ -117,12 +127,11 @@ const updateStatus = async (req, res) => {
 
 // Update timeline
 
-
-
 // Get all timelines
 const getdata = async (req, res) => {
   try {
-    const response = await Timeline.find();
+     const { celebrityId } = req.params;
+    const response = await Timeline.find({ celebrityId });
     if (!response || response.length === 0) {
       return res.status(404).json({ msg: "No data found" });
     }
