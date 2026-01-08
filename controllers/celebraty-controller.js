@@ -6,6 +6,8 @@ const { Moviev } = require("../models/moviev-model");
 const { Series } = require("../models/series-model");
 const { Positions } = require("../models/positions-model");
 const { Election } = require("../models/election-model");
+const Timeline = require("../models/timeline-model");
+const { Triviaentries } = require("../models/triviaentries-model");
 
 function createCleanUrl(title) {
   // Convert the title to lowercase
@@ -21,7 +23,8 @@ function createCleanUrl(title) {
 const sociallist = async (req, res) => {
   try {
     const categories = await SocialLink.find({ status: 1 });
-    if (!categories.length) return res.status(404).json({ msg: "No categories found" });
+    if (!categories.length)
+      return res.status(404).json({ msg: "No categories found" });
     res.status(200).json({ msg: categories });
   } catch (error) {
     console.error("Category Fetch Error:", error);
@@ -78,7 +81,9 @@ const getClientOptionsTable = async (req, res) => {
 };
 const getProfessions = async (req, res) => {
   try {
-    const professions = await Professionalmaster.find({}, "_id name").sort({ name: 1 });
+    const professions = await Professionalmaster.find({}, "_id name").sort({
+      name: 1,
+    });
     res.status(200).json(professions);
   } catch (error) {
     console.error("Error fetching professions:", error);
@@ -112,7 +117,6 @@ const addcelebraty = async (req, res) => {
       createdBy,
     } = req.body;
 
-   
     // ✅ Single image filename
     const profileImage = req.files?.image?.[0]
       ? req.files.image[0].filename
@@ -123,8 +127,8 @@ const addcelebraty = async (req, res) => {
       ? req.files.gallery.map((file) => file.filename)
       : [];
 
-       const url = createCleanUrl(req.body.name);
- const now = new Date(); // ✅ Define now
+    const url = createCleanUrl(req.body.name);
+    const now = new Date(); // ✅ Define now
     const createdAt = formatDateDMY(now); // 👈 formatted date
 
     // Optional: check duplicate title
@@ -134,7 +138,7 @@ const addcelebraty = async (req, res) => {
         .status(400)
         .json({ msg: "Celebraty with this name already exists" });
     }
- let parsedSocialLinks = [];
+    let parsedSocialLinks = [];
     try {
       parsedSocialLinks = socialLinks ? JSON.parse(socialLinks) : [];
     } catch (err) {
@@ -144,26 +148,25 @@ const addcelebraty = async (req, res) => {
     const newCelebraty = await Celebraty.create({
       name,
       slug,
-       shortinfo,
+      shortinfo,
       biography,
       statusnew,
       professions,
       languages,
-     socialLinks: parsedSocialLinks,
+      socialLinks: parsedSocialLinks,
       createdAt,
       status: "1",
       url,
       createdBy,
-       image: profileImage,
+      image: profileImage,
       gallery: galleryImages, // ✅ multiple paths
     });
 
-  res.status(201).json({
-  status: true,
-  msg: "Celebraty added successfully",
-  data: newCelebraty,
-});
-
+    res.status(201).json({
+      status: true,
+      msg: "Celebraty added successfully",
+      data: newCelebraty,
+    });
   } catch (error) {
     console.error("Add Celebraty Error:", error);
     res.status(500).json({ msg: "Internal Server Error" });
@@ -232,7 +235,7 @@ const updatecelebraty = async (req, res) => {
     mergedGallery = [...mergedGallery, ...newGalleryImages];
 
     const url = createCleanUrl(name);
-let parsedSocialLinks = [];
+    let parsedSocialLinks = [];
     try {
       parsedSocialLinks = socialLinks ? JSON.parse(socialLinks) : [];
     } catch (err) {
@@ -248,15 +251,19 @@ let parsedSocialLinks = [];
       professions,
       languages,
       url,
-       socialLinks: parsedSocialLinks,
-       
+      socialLinks: parsedSocialLinks,
+
       updatedAt: new Date(),
     };
 
     if (profileImage) updateData.image = profileImage;
     if (mergedGallery.length > 0) updateData.gallery = mergedGallery;
 
-    const result = await Celebraty.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+    const result = await Celebraty.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    );
 
     res.status(200).json({
       status: true,
@@ -268,9 +275,6 @@ let parsedSocialLinks = [];
     res.status(500).json({ status: false, msg: "Server error", error });
   }
 };
-
-
-
 
 //get table data
 
@@ -308,7 +312,10 @@ const deletecelebraty = async (req, res) => {
     const deletedSeries = await Series.deleteMany({ celebrityId: id });
     const deletedElection = await Election.deleteMany({ celebrityId: id });
     const deletedPositions = await Positions.deleteMany({ celebrityId: id });
-
+    const deletedTimeline = await Timeline.deleteMany({ celebrityId: id });
+    const deleteTriviaentries = await Triviaentries.deleteMany({
+      celebrityId: id,
+    });
     // ✅ Step 3: Delete the celebrity itself
     await Celebraty.findByIdAndDelete(id);
 
@@ -316,9 +323,11 @@ const deletecelebraty = async (req, res) => {
       status: true,
       msg: "Celebrity and related movies deleted successfully",
       deletedMoviesCount: deletedMovies.deletedCount,
-       deletedSeriesCount: deletedSeries.deletedCount,
-       deletedElectionCount: deletedElection.deletedCount,
-       deletedPositionsCount: deletedPositions.deletedCount,
+      deletedSeriesCount: deletedSeries.deletedCount,
+      deletedElectionCount: deletedElection.deletedCount,
+      deletedPositionsCount: deletedPositions.deletedCount,
+      deletedTimelineCount: deletedTimeline.deletedCount,
+      deleteTriviaentriesCount: deleteTriviaentries.deletedCount,
     });
   } catch (error) {
     console.error("❌ Delete celebraty error:", error);
@@ -349,9 +358,6 @@ const getcelebratyByid = async (req, res) => {
   }
 };
 
-
-
-
 module.exports = {
   addcelebraty,
   professionsOptions,
@@ -362,5 +368,5 @@ module.exports = {
   deletecelebraty,
   getcelebratyByid,
   sociallist,
-  getProfessions
+  getProfessions,
 };
