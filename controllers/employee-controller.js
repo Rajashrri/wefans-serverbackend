@@ -1,5 +1,6 @@
 const { User } = require("../models/user-model");
 const { Role } = require("../models/role-model");
+const bcrypt = require("bcryptjs");
 
 function createCleanUrl(title) {
   return title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
@@ -71,10 +72,11 @@ const addemployee = async (req, res) => {
   }
 };
 
+
 // ✅ Update Employee
 const updateemployee = async (req, res) => {
   try {
-    const { name, email, role_name, role_id } = req.body;
+    const { username, email, password, role_name, role_id } = req.body;
     const id = req.params.id;
 
     // Check duplicate email excluding same ID
@@ -83,7 +85,7 @@ const updateemployee = async (req, res) => {
       return res.status(400).json({ msg: "Email already exist" });
     }
 
-    const url = createCleanUrl(name);
+    const url = createCleanUrl(username);
     const updatedAt = formatDateDMY(new Date());
 
     const user = await User.findById(id);
@@ -91,20 +93,24 @@ const updateemployee = async (req, res) => {
       return res.status(404).json({ msg: "Employee not found" });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          username: name,
-          email,
-          role_name,
-          role_id,
-          url,
-          updatedAt,
-        },
-      },
-      { new: true }
-    );
+    // Prepare update object
+    const updateData = {
+      username,
+      email,
+      role_name,
+      role_id,
+      url,
+      updatedAt,
+    };
+
+    // Only update password if provided
+    if (password && password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      updateData.password = hashedPassword;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(id, { $set: updateData }, { new: true });
 
     res.status(200).json({
       status: true,
@@ -116,6 +122,7 @@ const updateemployee = async (req, res) => {
     res.status(500).json({ msg: "Internal Server Error", error });
   }
 };
+
 
 // ✅ Update Status
 const updateStatus = async (req, res) => {
