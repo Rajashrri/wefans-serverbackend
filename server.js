@@ -27,12 +27,15 @@ const positionsRoute = require("./router/positions-router");
 const celebratyRoute = require("./router/celebraty-router");
 const timelineRoute = require("./router/timeline-router");
 const sectionmasterRoute = require("./router/sectionmaster-router");
+const roleRoute = require("./router/role-router");
+const employeeRoute = require("./router/employee-router");
 
 
 const triviaentriesRoute = require("./router/triviaentries-router");
 
 const profileRoute = require("./router/profile-router");
 const professionalmasterRoute = require("./router/professionalmaster-router");
+const privilegesRoute = require("./router/privilege-router");
 
 const testimonialsRoute = require("./router/testimonials-router");
 const dashboardRoute = require("./router/dashboard-router");
@@ -46,7 +49,8 @@ const errorMiddleware1 = require("./middlewares/error-middleware");
 
 
 const corsOptions = {
- origin: 'https://wefans-frontend.vercel.app',
+  origin: 'https://wefans-frontend.vercel.app',
+
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
 };
@@ -79,6 +83,7 @@ app.use('/sectionmaster', express.static(path.join(__dirname, 'public/sectionmas
 
 app.use('/profile', express.static(path.join(__dirname, 'public/profile')));
 app.use('/testimonial', express.static(path.join(__dirname, 'public/testimonial')));
+app.use("/api/employee", employeeRoute);
 
 // ✅ API Routes
 app.use("/api/auth", authRoute);
@@ -98,7 +103,9 @@ app.use("/api/sectiontemplate", sectiontemplateRoute);
 
 app.use("/api/socialLink",socialLinkRoute);
 app.use("/api/genreMaster",genreMasterRoute);
+app.use("/api/role", roleRoute);
 
+app.use("/api/privileges", privilegesRoute);
 
 app.use("/api/profile", profileRoute);
 app.use("/api/testimonial", testimonialsRoute);

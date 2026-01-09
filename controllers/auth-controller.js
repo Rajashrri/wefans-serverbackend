@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const speakeasy = require("speakeasy");
-const User = require("../models/user-model");
+const { User } = require("../models/user-model");
 
 const home = async (req, res) => {
   try {

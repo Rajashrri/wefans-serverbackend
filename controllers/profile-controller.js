@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 
-const User = require("../models/user-model"); // ✅ fix: import model
+const { User } = require("../models/user-model");
 
 
 function createCleanUrl(title) {
@@ -22,7 +22,7 @@ const updateprofile = async (req, res) => {
     console.log("📸 Uploaded file:", req.file);
 
     if (req.file) {
-      updateData.profile_pic = req.file.filename;
+      updateData.pic = req.file.filename;
     }
 
     const updatedProfile = await User.findByIdAndUpdate(id, updateData, {
