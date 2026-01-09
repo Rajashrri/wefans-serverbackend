@@ -8,7 +8,8 @@ const { Positions } = require("../models/positions-model");
 const { Election } = require("../models/election-model");
 const Timeline = require("../models/timeline-model");
 const { Triviaentries } = require("../models/triviaentries-model");
-
+const fs = require("fs");
+const path = require("path");
 function createCleanUrl(title) {
   // Convert the title to lowercase
   let cleanTitle = title.toLowerCase();
@@ -213,12 +214,46 @@ const updatecelebraty = async (req, res) => {
       languages,
       oldGallery,
       socialLinks,
+      removeOldImage, // ✅ from frontend
     } = req.body;
 
-    const profileImage = req.files?.image?.[0]
-      ? req.files.image[0].filename
-      : null;
+    // ✅ Fetch existing record first
+    const existingCelebraty = await Celebraty.findById(id);
+    if (!existingCelebraty) {
+      return res.status(404).json({ status: false, msg: "Celebraty not found" });
+    }
 
+    // ✅ Handle profile image
+    let profileImage = existingCelebraty.image;
+
+    // Case 1: If new image uploaded
+    if (req.files?.image?.[0]) {
+      // delete old image if it exists
+      if (existingCelebraty.image) {
+        const oldImagePath = path.join(
+          __dirname,
+          "../uploads/celebraty",
+          existingCelebraty.image
+        );
+        if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
+      }
+      profileImage = req.files.image[0].filename;
+    }
+
+    // Case 2: If old image manually removed
+    else if (removeOldImage === "true") {
+      if (existingCelebraty.image) {
+        const oldImagePath = path.join(
+          __dirname,
+          "../uploads/celebraty",
+          existingCelebraty.image
+        );
+        if (fs.existsSync(oldImagePath)) fs.unlinkSync(oldImagePath);
+      }
+      profileImage = ""; // ✅ clear from DB
+    }
+
+    // ✅ Handle new gallery uploads
     const newGalleryImages = req.files?.gallery
       ? req.files.gallery.map((file) => file.filename)
       : [];
@@ -234,7 +269,10 @@ const updatecelebraty = async (req, res) => {
     }
     mergedGallery = [...mergedGallery, ...newGalleryImages];
 
+    // ✅ Clean URL
     const url = createCleanUrl(name);
+
+    // ✅ Parse social links safely
     let parsedSocialLinks = [];
     try {
       parsedSocialLinks = socialLinks ? JSON.parse(socialLinks) : [];
@@ -242,6 +280,7 @@ const updatecelebraty = async (req, res) => {
       console.error("Invalid socialLinks JSON:", err);
     }
 
+    // ✅ Prepare update data
     const updateData = {
       name,
       slug,
@@ -252,22 +291,18 @@ const updatecelebraty = async (req, res) => {
       languages,
       url,
       socialLinks: parsedSocialLinks,
-
+      gallery: mergedGallery,
+      image: profileImage, // ✅ always included (can be "")
       updatedAt: new Date(),
     };
 
-    if (profileImage) updateData.image = profileImage;
-    if (mergedGallery.length > 0) updateData.gallery = mergedGallery;
-
-    const result = await Celebraty.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true }
-    );
+    const result = await Celebraty.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
 
     res.status(200).json({
       status: true,
-      msg: "Updated Successfully",
+      msg: "Celebraty updated successfully",
       data: result,
     });
   } catch (error) {
