@@ -29,6 +29,7 @@ const timelineRoute = require("./router/timeline-router");
 const sectionmasterRoute = require("./router/sectionmaster-router");
 const roleRoute = require("./router/role-router");
 const employeeRoute = require("./router/employee-router");
+const templateRoute = require("./router/template-router");
 
 
 const triviaentriesRoute = require("./router/triviaentries-router");
@@ -49,7 +50,7 @@ const errorMiddleware1 = require("./middlewares/error-middleware");
 
 
 const corsOptions = {
-  origin: 'https://wefans-frontend.vercel.app',
+   origin: 'https://wefans-frontend.vercel.app',
 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
@@ -84,6 +85,7 @@ app.use('/sectionmaster', express.static(path.join(__dirname, 'public/sectionmas
 app.use('/profile', express.static(path.join(__dirname, 'public/profile')));
 app.use('/testimonial', express.static(path.join(__dirname, 'public/testimonial')));
 app.use("/api/employee", employeeRoute);
+app.use("/api/template", templateRoute);
 
 // ✅ API Routes
 app.use("/api/auth", authRoute);

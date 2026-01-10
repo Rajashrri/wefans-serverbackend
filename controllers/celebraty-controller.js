@@ -8,6 +8,8 @@ const { Positions } = require("../models/positions-model");
 const { Election } = require("../models/election-model");
 const Timeline = require("../models/timeline-model");
 const { Triviaentries } = require("../models/triviaentries-model");
+const { SectionTemplate } = require("../models/sectiontemplate-model");
+
 const fs = require("fs");
 const path = require("path");
 function createCleanUrl(title) {
@@ -80,17 +82,29 @@ const getClientOptionsTable = async (req, res) => {
     });
   }
 };
+// Backend: controllers/celebratyController.js
 const getProfessions = async (req, res) => {
   try {
-    const professions = await Professionalmaster.find({}, "_id name").sort({
-      name: 1,
-    });
-    res.status(200).json(professions);
+    const professions = await Professionalmaster.find({}, "_id name sectiontemplate");
+    console.log("✅ Professions fetched:", professions);
+    res.json({ success: true, msg: professions });
   } catch (error) {
-    console.error("Error fetching professions:", error);
-    res.status(500).json({ message: "Failed to fetch professions", error });
+    console.error("❌ Error fetching professions:", error);
+    res.status(500).json({ success: false, msg: "Server Error" });
   }
 };
+const getSectionTemplates = async (req, res) => {
+  try {
+    const templates = await SectionTemplate.find({}, "_id title sections");
+    console.log("✅ Section templates fetched:", templates);
+    res.json({ success: true, msg: templates });
+  } catch (error) {
+    console.error("❌ Error fetching section templates:", error);
+    res.status(500).json({ success: false, msg: "Server Error" });
+  }
+};
+
+
 
 const formatDateDMY = (date) => {
   const d = new Date(date);
@@ -404,4 +418,5 @@ module.exports = {
   getcelebratyByid,
   sociallist,
   getProfessions,
+  getSectionTemplates,
 };

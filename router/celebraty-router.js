@@ -28,6 +28,7 @@ const upload = multer({ storage: storage });
 router.get("/professionsOptions", Celebraty.professionsOptions);
 router.get("/sociallist", Celebraty.sociallist);
 router.get("/professions", Celebraty.getProfessions);
+router.get("/fetchSectionTemplate", Celebraty.getSectionTemplates);
 
 router.get("/languageOptions", Celebraty.languageOptions);
 // In router file
