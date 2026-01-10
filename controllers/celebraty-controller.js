@@ -9,6 +9,7 @@ const { Election } = require("../models/election-model");
 const Timeline = require("../models/timeline-model");
 const { Triviaentries } = require("../models/triviaentries-model");
 const { SectionTemplate } = require("../models/sectiontemplate-model");
+const SectionMaster = require("../models/sectionmaster-model");
 
 const fs = require("fs");
 const path = require("path");
@@ -21,7 +22,31 @@ function createCleanUrl(title) {
 
   return cleanTitle;
 }
+const getSectionMasters = async (req, res) => {
+  try {
+    const sectionMasters = await SectionMaster.find().sort({ createdAt: -1 });
 
+    if (!sectionMasters || sectionMasters.length === 0) {
+      return res.status(200).json({
+        success: true,
+        msg: [],
+        message: "No section masters found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      msg: sectionMasters,
+    });
+  } catch (error) {
+    console.error("Error fetching section masters:", error);
+    res.status(500).json({
+      success: false,
+      msg: "Server error while fetching section masters",
+      error: error.message,
+    });
+  }
+};
 // ✅ Get category dropdown options
 const sociallist = async (req, res) => {
   try {
@@ -419,4 +444,5 @@ module.exports = {
   sociallist,
   getProfessions,
   getSectionTemplates,
+  getSectionMasters,
 };

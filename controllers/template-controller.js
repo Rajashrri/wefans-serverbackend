@@ -1,36 +1,78 @@
-// controllers/sectionTemplateController.js
-const { SectionTemplate } = require("../models/sectiontemplate-model");
 const SectionMaster = require("../models/sectionmaster-model");
 const mongoose = require("mongoose");
-const path = require("path"); 
+
+// ✅ Get Section Master by ID (for Dynamic Form)
 const getSectionTemplateById = async (req, res) => {
   try {
-    const templateId = req.params.id;
+    const sectionMasterId = req.params.id;
+console.log(sectionMasterId);
+    // 🔹 Find one section master by its ID
+    const section = await SectionMaster.findById(sectionMasterId);
 
-    // 1️⃣ Fetch the template
-    const template = await SectionTemplate.findById(templateId);
-
-    if (!template) {
-      return res.status(404).json({ status: false, msg: "Template not found" });
+    if (!section) {
+      return res.status(404).json({
+        status: false,
+        msg: "Section Master not found",
+      });
     }
 
-    // 2️⃣ Fetch all sections from sectionmasters that match the IDs in template.sections
-    const sections = await SectionMaster.find({
-      _id: { $in: template.sections },
+    // 🔹 Send only the section master document
+    res.status(200).json({
+      status: true,
+      data: section, // contains fieldsConfig array
     });
-
-    // 3️⃣ Return template with populated sections
-    const populatedTemplate = {
-      ...template.toObject(),
-      sections, // now sections contain full section master documents with fieldsConfig
-    };
-
-    res.json({ status: true, data: populatedTemplate });
   } catch (error) {
-    console.error("Error fetching template with sections:", error);
-    res.status(500).json({ status: false, msg: "Server Error" });
+    console.error("Error fetching Section Master:", error);
+    res.status(500).json({
+      status: false,
+      msg: "Server error while fetching section master",
+    });
   }
 };
+
+
+const getSectionDataBySectionId = async (req, res) => {
+  try {
+    const { celebId, id } = req.params;
+
+    // Find section master by ID
+    const section = await SectionMaster.findById(id);
+    if (!section) {
+      return res.status(404).json({
+        success: false,
+        msg: "Section Master not found",
+      });
+    }
+
+    // Dynamic collection name from section name (e.g., Team -> team)
+    const collectionName = section.name.toLowerCase();
+
+    // Dynamic model creation
+    const DynamicModel =
+      mongoose.models[collectionName] ||
+      mongoose.model(
+        collectionName,
+        new mongoose.Schema({}, { strict: false })
+      );
+
+    // Fetch all data entries for this celebId
+    const data = await DynamicModel.find({ celebId });
+
+    return res.status(200).json({
+      success: true,
+      sectionName: section.name,
+      fields: section.fieldsConfig,
+      data,
+    });
+  } catch (err) {
+    console.error("Error fetching section data:", err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error while fetching section data",
+    });
+  }
+};
+// ✅ Save Dynamic Template Data
 const saveDynamicTemplateData = async (req, res) => {
   try {
     const { celebId, templateId } = req.body;
@@ -39,7 +81,7 @@ const saveDynamicTemplateData = async (req, res) => {
       return res.status(400).json({ success: false, msg: "Missing IDs" });
     }
 
-    // ✅ Build nested data structure dynamically from FormData fields
+    // ✅ Build nested structure dynamically
     const data = {};
     for (const key in req.body) {
       if (key.includes(".")) {
@@ -58,10 +100,11 @@ const saveDynamicTemplateData = async (req, res) => {
       });
     }
 
-    // ✅ Now save section-wise data dynamically
+    // ✅ Save each section’s data into its own dynamic collection
     for (const sectionName of Object.keys(data)) {
       const sectionData = data[sectionName];
 
+      // Define fields dynamically
       const fields = {};
       for (const key of Object.keys(sectionData)) {
         fields[key] = { type: mongoose.Schema.Types.Mixed };
@@ -87,4 +130,4 @@ const saveDynamicTemplateData = async (req, res) => {
   }
 };
 
-module.exports = { getSectionTemplateById,saveDynamicTemplateData };
+module.exports = { getSectionTemplateById, saveDynamicTemplateData,getSectionDataBySectionId };

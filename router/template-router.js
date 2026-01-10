@@ -40,6 +40,7 @@ router.use(express.static(path.resolve(__dirname,'public')))
 router.get("/getSectionTemplateById/:id", Template.getSectionTemplateById);
 
 router.post("/save", upload.any(), Template.saveDynamicTemplateData);
+router.get("/data/:celebId/:id", Template.getSectionDataBySectionId);
 
 
     module.exports = router;

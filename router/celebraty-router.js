@@ -46,6 +46,8 @@ router.get("/getcelebraties", Celebraty.getdata);
 router.patch("/update-statuscelebraty", Celebraty.updateStatus);
 router.delete("/deletecelebraty/:id", Celebraty.deletecelebraty);
 router.get("/getcelebratyByid/:id", Celebraty.getcelebratyByid);
+router.get("/getSectionMasters", Celebraty.getSectionMasters);
+
 router.patch(
   "/updatecelebraty/:id",
   upload.fields([
