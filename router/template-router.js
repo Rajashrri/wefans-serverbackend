@@ -13,7 +13,6 @@ router.use(bodyparser.urlencoded({extended:true}));
 router.use(express.static(path.resolve(__dirname,'public')))
 //crole
 
-router.get("/getSectionTemplateById/:id", Template.getSectionTemplateById);
 
 router.use(bodyparser.urlencoded({extended:true}));
 router.use(express.static(path.resolve(__dirname,'public')))
@@ -23,11 +22,11 @@ router.use(express.static(path.resolve(__dirname,'public')))
         if(!fs.existsSync("public")){
             fs.mkdirSync("public");
         }
-        if(!fs.existsSync("public/allimages")){
-            fs.mkdirSync("public/allimages");
+        if(!fs.existsSync("public/template")){
+            fs.mkdirSync("public/template");
         }
     
-        cb(null, "public/allimages");
+        cb(null, "public/template");
         },
         filename: function(req,file,cb){
         cb(null, Date.now() + file.originalname);
@@ -37,5 +36,10 @@ router.use(express.static(path.resolve(__dirname,'public')))
     const upload = multer({
         storage:storage,
     })
+
+router.get("/getSectionTemplateById/:id", Template.getSectionTemplateById);
+
+router.post("/save", upload.any(), Template.saveDynamicTemplateData);
+
 
     module.exports = router;

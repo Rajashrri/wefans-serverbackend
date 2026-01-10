@@ -50,8 +50,7 @@ const errorMiddleware1 = require("./middlewares/error-middleware");
 
 
 const corsOptions = {
-   origin: 'https://wefans-frontend.vercel.app',
-
+  origin: 'https://wefans-frontend.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
 };
@@ -81,6 +80,7 @@ app.use('/series', express.static(path.join(__dirname, 'public/series')));
 app.use('/election', express.static(path.join(__dirname, 'public/election')));
 app.use('/positions', express.static(path.join(__dirname, 'public/positions')));
 app.use('/sectionmaster', express.static(path.join(__dirname, 'public/sectionmaster')));
+app.use('/template', express.static(path.join(__dirname, 'public/template')));
 
 app.use('/profile', express.static(path.join(__dirname, 'public/profile')));
 app.use('/testimonial', express.static(path.join(__dirname, 'public/testimonial')));
