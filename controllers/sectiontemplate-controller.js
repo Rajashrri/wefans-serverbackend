@@ -1,5 +1,6 @@
 const { SectionTemplate } = require("../models/sectiontemplate-model");
 const SectionMaster = require("../models/sectionmaster-model");
+const CelebratySection = require("../models/celebratysection-model");
 
 function createCleanUrl(title) {
   // Convert the title to lowercase
@@ -119,41 +120,76 @@ const getsectiontemplateByid = async (req, res) => {
 const updateSectionTemplate = async (req, res) => {
   try {
     const id = req.params.id;
-    const { title, sections = [] } = req.body;
+    let { title, sections = [] } = req.body;
 
-    // 🔹 1. Find existing template
+    // 1️⃣ Find existing template
     const existingTemplate = await SectionTemplate.findById(id);
     if (!existingTemplate) {
       return res.status(404).json({ success: false, msg: "Section Template not found" });
     }
 
-    // 🔹 2. Check for duplicate title (case-insensitive)
+    // 2️⃣ Check for duplicate title (case-insensitive)
     const duplicate = await SectionTemplate.findOne({
       title: { $regex: new RegExp(`^${title}$`, "i") },
       _id: { $ne: id },
     });
-
     if (duplicate) {
-      return res.status(400).json({
-        success: false,
-        msg: "Section Template already exists",
-      });
+      return res.status(400).json({ success: false, msg: "Section Template already exists" });
     }
 
-    // 🔹 3. Generate clean URL
+    // 3️⃣ Generate clean URL
     const url = createCleanUrl(title);
 
-    // 🔹 4. Update template
-    const updatedTemplate = await SectionTemplate.findByIdAndUpdate(
-      id,
-      { $set: { title, sections, url } },
-      { new: true }
-    );
+    // 4️⃣ Detect newly added sections
+    const oldSections = existingTemplate.sections || [];
+    const newSections = sections.filter((s) => !oldSections.includes(s));
+
+    // 5️⃣ Update template
+    existingTemplate.title = title;
+    existingTemplate.sections = sections;
+    existingTemplate.url = url;
+    await existingTemplate.save();
+
+    // 6️⃣ If there are new sections, add them to celebratysection
+    if (newSections.length > 0) {
+      // Fetch section details from SectionMaster
+      const sectionDocs = await SectionMaster.find({ _id: { $in: newSections } });
+      const sectionMap = {};
+      sectionDocs.forEach((s) => {
+        sectionMap[s._id] = s.name; // map ID -> name
+      });
+
+      // Find all celebraties linked to this template
+      const celebratyIds = await CelebratySection.find({ templateId: id }).distinct("celebratyId");
+
+      const newEntries = [];
+      for (let celebId of celebratyIds) {
+        for (let secId of newSections) {
+          const exists = await CelebratySection.findOne({
+            celebratyId: celebId,
+            templateId: id,
+            sectionmaster: secId,
+          });
+          if (!exists) {
+            newEntries.push({
+              celebratyId: celebId,
+              templateId: id,
+              sectionmaster: secId,
+              sectiontemplate: sectionMap[secId] || "Unknown Section", // ✅ save section name
+            });
+          }
+        }
+      }
+
+      if (newEntries.length > 0) {
+        await CelebratySection.insertMany(newEntries);
+      }
+    }
 
     return res.status(200).json({
       success: true,
       msg: "Section Template updated successfully",
-      data: updatedTemplate,
+      data: existingTemplate,
     });
   } catch (error) {
     console.error("Error updating Section Template:", error);
@@ -164,6 +200,7 @@ const updateSectionTemplate = async (req, res) => {
     });
   }
 };
+
 
 
 

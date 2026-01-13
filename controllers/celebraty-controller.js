@@ -10,9 +10,171 @@ const Timeline = require("../models/timeline-model");
 const { Triviaentries } = require("../models/triviaentries-model");
 const { SectionTemplate } = require("../models/sectiontemplate-model");
 const SectionMaster = require("../models/sectionmaster-model");
+const CelebratySection = require("../models/celebratysection-model");
 
 const fs = require("fs");
 const path = require("path");
+
+
+
+
+
+
+const addcelebraty = async (req, res) => {
+  try {
+    const {
+      name,
+      slug,
+      shortinfo,
+      biography,
+      statusnew,
+      professions,
+      languages,
+      socialLinks,
+      createdBy,
+    } = req.body;
+
+    const profileImage = req.files?.image?.[0]
+      ? req.files.image[0].filename
+      : null;
+
+    const galleryImages = req.files?.gallery
+      ? req.files.gallery.map((file) => file.filename)
+      : [];
+
+    const url = createCleanUrl(name);
+    const now = new Date();
+    const createdAt = formatDateDMY(now);
+
+    // 🔹 Check duplicate
+    const existingCelebraty = await Celebraty.findOne({ name });
+    if (existingCelebraty) {
+      return res
+        .status(400)
+        .json({ msg: "Celebraty with this name already exists" });
+    }
+
+    // 🔹 Parse social links safely
+    let parsedSocialLinks = [];
+    try {
+      parsedSocialLinks = socialLinks ? JSON.parse(socialLinks) : [];
+    } catch (err) {
+      console.error("Invalid socialLinks JSON:", err);
+    }
+
+    // 🔹 Save celebrity
+    const newCelebraty = await Celebraty.create({
+      name,
+      slug,
+      shortinfo,
+      biography,
+      statusnew,
+      professions,
+      languages,
+      socialLinks: parsedSocialLinks,
+      createdAt,
+      status: "1",
+      url,
+      createdBy,
+      image: profileImage,
+      gallery: galleryImages,
+    });
+
+// ✅ Parse professions if stringified
+let parsedProfessions = [];
+try {
+  if (typeof professions === "string") {
+    parsedProfessions = JSON.parse(professions);
+  } else {
+    parsedProfessions = professions;
+  }
+} catch (err) {
+  console.error("Invalid professions JSON:", err);
+  parsedProfessions = [];
+}
+
+// ✅ Loop through professions safely
+if (parsedProfessions && Array.isArray(parsedProfessions)) {
+  for (const profId of parsedProfessions) {
+    console.log("🔹 Checking profession ID:", profId);
+    const profession = await Professionalmaster.findById(profId);
+    if (!profession) {
+      console.log("❌ Profession not found:", profId);
+      continue;
+    }
+
+    console.log("✅ Found profession:", profession.title);
+
+    const sectionTemplateIds = profession.sectiontemplate || [];
+    console.log("Section Templates:", sectionTemplateIds);
+
+    for (const templateId of sectionTemplateIds) {
+      const template = await SectionTemplate.findById(templateId);
+      if (!template) {
+        console.log("❌ Template not found:", templateId);
+        continue;
+      }
+
+      console.log("✅ Found template:", template.title);
+
+      const sectionIds = template.sections || [];
+      console.log("Sections:", sectionIds);
+
+      for (const sectionId of sectionIds) {
+        const section = await SectionMaster.findById(sectionId);
+        if (!section) {
+          console.log("❌ Section not found:", sectionId);
+          continue;
+        }
+
+        // ✅ Prevent duplicate entries (now includes templateId)
+        const exists = await CelebratySection.findOne({
+          celebratyId: newCelebraty._id.toString(),
+          professions: profId,
+          sectionmaster: section._id.toString(),
+          templateId: template._id.toString(), // ✅ Added templateId check
+        });
+
+        if (exists) {
+          console.log(
+            `⚠️ Skipping duplicate: ${section.name} already exists for celeb ${newCelebraty._id} under template ${template.title}`
+          );
+          continue;
+        }
+
+        console.log(
+          "✅ Saving celebratysection for module:",
+          section.name,
+          "under template:",
+          template.title
+        );
+
+        await CelebratySection.create({
+          sectiontemplate: section.name,
+          sectionmaster: section._id.toString(),  // ✅ SectionMaster ID
+          templateId: template._id.toString(),    // ✅ Save Template ID
+          celebratyId: newCelebraty._id.toString(),
+          professions: profId,
+        });
+      }
+    }
+  }
+}
+
+
+
+
+    res.status(201).json({
+      status: true,
+      msg: "Celebraty added successfully with sections",
+      data: newCelebraty,
+    });
+  } catch (error) {
+    console.error("Add Celebraty Error:", error);
+    res.status(500).json({ msg: "Internal Server Error" });
+  }
+};
+
 function createCleanUrl(title) {
   // Convert the title to lowercase
   let cleanTitle = title.toLowerCase();
@@ -143,75 +305,75 @@ const formatDateDMY = (date) => {
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 };
 
-const addcelebraty = async (req, res) => {
-  try {
-    const {
-      name,
-      slug,
-      shortinfo,
-      biography,
-      statusnew,
-      professions,
-      languages,
-      socialLinks,
-      createdBy,
-    } = req.body;
+// const addcelebraty = async (req, res) => {
+//   try {
+//     const {
+//       name,
+//       slug,
+//       shortinfo,
+//       biography,
+//       statusnew,
+//       professions,
+//       languages,
+//       socialLinks,
+//       createdBy,
+//     } = req.body;
 
-    // ✅ Single image filename
-    const profileImage = req.files?.image?.[0]
-      ? req.files.image[0].filename
-      : null;
+//     // ✅ Single image filename
+//     const profileImage = req.files?.image?.[0]
+//       ? req.files.image[0].filename
+//       : null;
 
-    // ✅ Multiple gallery filenames
-    const galleryImages = req.files?.gallery
-      ? req.files.gallery.map((file) => file.filename)
-      : [];
+//     // ✅ Multiple gallery filenames
+//     const galleryImages = req.files?.gallery
+//       ? req.files.gallery.map((file) => file.filename)
+//       : [];
 
-    const url = createCleanUrl(req.body.name);
-    const now = new Date(); // ✅ Define now
-    const createdAt = formatDateDMY(now); // 👈 formatted date
+//     const url = createCleanUrl(req.body.name);
+//     const now = new Date(); // ✅ Define now
+//     const createdAt = formatDateDMY(now); // 👈 formatted date
 
-    // Optional: check duplicate title
-    const existingCelebraty = await Celebraty.findOne({ name });
-    if (existingCelebraty) {
-      return res
-        .status(400)
-        .json({ msg: "Celebraty with this name already exists" });
-    }
-    let parsedSocialLinks = [];
-    try {
-      parsedSocialLinks = socialLinks ? JSON.parse(socialLinks) : [];
-    } catch (err) {
-      console.error("Invalid socialLinks JSON:", err);
-    }
+//     // Optional: check duplicate title
+//     const existingCelebraty = await Celebraty.findOne({ name });
+//     if (existingCelebraty) {
+//       return res
+//         .status(400)
+//         .json({ msg: "Celebraty with this name already exists" });
+//     }
+//     let parsedSocialLinks = [];
+//     try {
+//       parsedSocialLinks = socialLinks ? JSON.parse(socialLinks) : [];
+//     } catch (err) {
+//       console.error("Invalid socialLinks JSON:", err);
+//     }
 
-    const newCelebraty = await Celebraty.create({
-      name,
-      slug,
-      shortinfo,
-      biography,
-      statusnew,
-      professions,
-      languages,
-      socialLinks: parsedSocialLinks,
-      createdAt,
-      status: "1",
-      url,
-      createdBy,
-      image: profileImage,
-      gallery: galleryImages, // ✅ multiple paths
-    });
+//     const newCelebraty = await Celebraty.create({
+//       name,
+//       slug,
+//       shortinfo,
+//       biography,
+//       statusnew,
+//       professions,
+//       languages,
+//       socialLinks: parsedSocialLinks,
+//       createdAt,
+//       status: "1",
+//       url,
+//       createdBy,
+//       image: profileImage,
+//       gallery: galleryImages, // ✅ multiple paths
+//     });
 
-    res.status(201).json({
-      status: true,
-      msg: "Celebraty added successfully",
-      data: newCelebraty,
-    });
-  } catch (error) {
-    console.error("Add Celebraty Error:", error);
-    res.status(500).json({ msg: "Internal Server Error" });
-  }
-};
+//     res.status(201).json({
+//       status: true,
+//       msg: "Celebraty added successfully",
+//       data: newCelebraty,
+//     });
+//   } catch (error) {
+//     console.error("Add Celebraty Error:", error);
+//     res.status(500).json({ msg: "Internal Server Error" });
+//   }
+// };
 
 //update status
 
@@ -431,6 +593,30 @@ const getcelebratyByid = async (req, res) => {
       .json({ msg: "Internal Server Error", error: error.message });
   }
 };
+const getCelebratySectionsByCeleb = async (req, res) => {
+  try {
+    const { celebratyId } = req.params;
+
+    if (!celebratyId) {
+      return res.status(400).json({ msg: "celebratyId is required" });
+    }
+
+    // Populate sectionmaster and sectiontemplate names
+    const sections = await CelebratySection.find({ celebratyId })
+      .populate("sectionmaster", "name")      // only select name field
+      .populate("sectiontemplate", "name");   // only select name field
+
+    // Now each section document will have sectionmaster.name and sectiontemplate.name
+    res.status(200).json({
+      status: true,
+      data: sections,
+    });
+  } catch (error) {
+    console.error("Get CelebratySections Error:", error);
+    res.status(500).json({ msg: "Internal Server Error" });
+  }
+};
+
 
 module.exports = {
   addcelebraty,
@@ -445,4 +631,5 @@ module.exports = {
   getProfessions,
   getSectionTemplates,
   getSectionMasters,
+  getCelebratySectionsByCeleb,
 };

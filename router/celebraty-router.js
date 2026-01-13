@@ -47,6 +47,7 @@ router.patch("/update-statuscelebraty", Celebraty.updateStatus);
 router.delete("/deletecelebraty/:id", Celebraty.deletecelebraty);
 router.get("/getcelebratyByid/:id", Celebraty.getcelebratyByid);
 router.get("/getSectionMasters", Celebraty.getSectionMasters);
+router.get("/getCelebratySectionsByCeleb/:celebratyId", Celebraty.getCelebratySectionsByCeleb);
 
 router.patch(
   "/updatecelebraty/:id",
