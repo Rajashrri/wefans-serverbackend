@@ -47,5 +47,8 @@ router.get("/dataget/:celebId/:sectionId/:dataId", Template.getTemplateDataById)
 
 // ✅ Update section data
 router.post("/update", upload.any(), Template.updateTemplateData);
-
+router.delete(
+  "/delete/:celebId/:sectionName/:dataId",
+  Template.deleteTemplateData
+);
     module.exports = router;

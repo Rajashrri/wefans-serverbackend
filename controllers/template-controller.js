@@ -30,6 +30,41 @@ console.log(sectionMasterId);
     });
   }
 };
+// ✅ Delete Dynamic Section Data
+const deleteTemplateData = async (req, res) => {
+  try {
+    const { celebId, sectionName, dataId } = req.params;
+
+    if (!celebId || !sectionName || !dataId) {
+      return res.status(400).json({
+        success: false,
+        msg: "Missing required parameters",
+      });
+    }
+
+    const modelName = sectionName.toLowerCase();
+    const DynamicModel =
+      mongoose.models[modelName] ||
+      mongoose.model(modelName, new mongoose.Schema({}, { strict: false }));
+
+    const deleted = await DynamicModel.findOneAndDelete({
+      _id: dataId,
+      celebId,
+    });
+
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Data not found for deletion" });
+    }
+
+    res.json({ success: true, msg: "Section data deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting dynamic section data:", err);
+    res.status(500).json({ success: false, msg: "Server error while deleting" });
+  }
+};
+
 
 
 const getSectionDataBySectionId = async (req, res) => {
@@ -242,4 +277,4 @@ const updateTemplateData = async (req, res) => {
 };
 
 
-module.exports = { getSectionTemplateById, saveDynamicTemplateData,getSectionDataBySectionId,getTemplateDataById,updateTemplateData };
+module.exports = { getSectionTemplateById, saveDynamicTemplateData,getSectionDataBySectionId,getTemplateDataById,updateTemplateData,deleteTemplateData };
