@@ -1,5 +1,6 @@
 const SectionMaster = require("../models/sectionmaster-model");
 const mongoose = require("mongoose");
+const { SectionTemplate } = require("../models/sectiontemplate-model");
 
 // ✅ Get Section Master by ID (for Dynamic Form)
 const getSectionTemplateById = async (req, res) => {
@@ -131,71 +132,112 @@ console.log(celebId);
 };
 
 
-// ✅ Fetch Data by ID (for Edit Form)
- const getTemplateDataById = async (req, res) => {
+// ✅ Fetch Dynamic Data by ID (for Edit Form)
+const getTemplateDataById = async (req, res) => {
   try {
     const { celebId, sectionId, dataId } = req.params;
-    const data = await TemplateData.findOne({
-      _id: dataId,
-      celebId,
-      templateId: sectionId,
-    });
 
-    if (!data)
-      return res
-        .status(404)
-        .json({ success: false, msg: "Section data not found" });
+    // 1️⃣ Find which section this ID belongs to
+    const section = await SectionMaster.findById(sectionId);
+    if (!section) {
+      return res.status(404).json({
+        success: false,
+        msg: "Section Master not found",
+      });
+    }
 
-    res.json({ success: true, data: data.data });
+    // 2️⃣ Dynamic collection name from section name
+    const collectionName = section.name.toLowerCase();
+
+    // 3️⃣ Create or reuse a model dynamically
+    const DynamicModel =
+      mongoose.models[collectionName] ||
+      mongoose.model(collectionName, new mongoose.Schema({}, { strict: false }));
+
+    // 4️⃣ Fetch that specific record
+    const record = await DynamicModel.findOne({ _id: dataId, celebId });
+
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        msg: "Section data not found",
+      });
+    }
+
+    // 5️⃣ Send full record back
+    res.json({ success: true, data: record });
   } catch (err) {
     console.error("Fetch template data error:", err);
     res.status(500).json({ success: false, msg: "Internal server error" });
   }
 };
 
+
 // ---------------------------------------------
-// ✅ Update Template Data
- const updateTemplateData = async (req, res) => {
+// ✅ Update Template Data (Dynamic)
+const updateTemplateData = async (req, res) => {
   try {
-    const { celebId, templateId, sectionName, dataId } = req.body;
+    const { celebId, sectionName, dataId } = req.body;
 
-    const updateFields = {};
+    if (!celebId || !sectionName || !dataId) {
+      return res.status(400).json({
+        success: false,
+        msg: "Missing required parameters (celebId, sectionName, dataId)",
+      });
+    }
 
-    // Handle text/select fields
+    // 🔹 Prepare update data
+    const updateData = {};
+
+    // Handle text/select/array fields
     Object.keys(req.body).forEach((key) => {
       if (key.startsWith(`${sectionName}.`)) {
-        const fieldKey = key.split(`${sectionName}.`)[1];
-        updateFields[`data.${fieldKey}`] = req.body[key];
+        const fieldKey = key.replace(`${sectionName}.`, "").replace("[]", "");
+        updateData[fieldKey] = req.body[key];
       }
     });
 
-    // Handle file uploads
-    if (req.files) {
-      Object.keys(req.files).forEach((key) => {
-        const fieldName = key.split(`${sectionName}.`)[1];
-        const fileArray = req.files[key];
-        if (fileArray && fileArray.length > 0) {
-          updateFields[`data.${fieldName}`] = fileArray[0].path;
+    // Handle uploaded files
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file) => {
+        const [section, field] = file.fieldname.split(".");
+        if (section === sectionName) {
+          updateData[field] = `/template/${file.filename}`;
         }
       });
     }
 
-    const updated = await TemplateData.findByIdAndUpdate(
-      dataId,
-      { $set: updateFields },
+    // ✅ Create or reuse the dynamic model (same as in saveDynamicTemplateData)
+    const modelName = sectionName.toLowerCase();
+    const DynamicModel =
+      mongoose.models[modelName] ||
+      mongoose.model(modelName, new mongoose.Schema({}, { strict: false }));
+
+    // 🔹 Update record
+    const updatedRecord = await DynamicModel.findOneAndUpdate(
+      { _id: dataId, celebId },
+      { $set: updateData },
       { new: true }
     );
 
-    if (!updated) {
-      return res
-        .status(404)
-        .json({ success: false, msg: "Section data not found" });
+    if (!updatedRecord) {
+      return res.status(404).json({
+        success: false,
+        msg: "Section data not found for update",
+      });
     }
 
-    res.json({ success: true, msg: "Template data updated successfully" });
+    res.json({
+      success: true,
+      msg: "Section data updated successfully",
+      data: updatedRecord,
+    });
   } catch (err) {
-    console.error("Update template error:", err);
-    res.status(500).json({ success: false, msg: "Internal server error" });
+    console.error("Error updating dynamic template data:", err);
+    res.status(500).json({
+      success: false,
+      msg: "Server error while updating section data",
+    });
   }
 };
 
