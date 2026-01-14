@@ -7,26 +7,27 @@ const celebratySchema = new Schema({
   shortinfo: { type: String, required: true },
   statusnew: { type: String, required: true },
   professions: { type: String },
-    languages: { type: String },
+  languages: { type: String },
+  gender: { type: String },
+  dob: { type: String },
 
   biography: { type: String, required: true },
   image: {
     type: String,
-   
   },
-   gallery: [String], // ✅ new field for multiple gallery images
-   createdBy: { type: String }, // 👈 optional if you're adding manually
-   updatedAt: { type: String }, // 👈 optional if you're adding manually
+  gallery: [String], // ✅ new field for multiple gallery images
+  createdBy: { type: String }, // 👈 optional if you're adding manually
+  updatedAt: { type: String }, // 👈 optional if you're adding manually
   // ✅ Social links stored as objects
-    socialLinks: [
-      {
-        platform: { type: String },   // social link _id or platform key
-        name: { type: String },       // display name (e.g. "Facebook")
-        url: { type: String },        // default URL
-        customUrl: { type: String },  // custom URL entered by user
-      },
-    ],
-   
+  socialLinks: [
+    {
+      platform: { type: String }, // social link _id or platform key
+      name: { type: String }, // display name (e.g. "Facebook")
+      url: { type: String }, // default URL
+      customUrl: { type: String }, // custom URL entered by user
+    },
+  ],
+
   url: { type: String },
   status: { type: String },
   createdAt: { type: String }, // 👈 optional if you're adding manually
