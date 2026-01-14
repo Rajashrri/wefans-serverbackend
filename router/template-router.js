@@ -42,5 +42,10 @@ router.get("/getSectionTemplateById/:id", Template.getSectionTemplateById);
 router.post("/save", upload.any(), Template.saveDynamicTemplateData);
 router.get("/data/:celebId/:id", Template.getSectionDataBySectionId);
 
+// ✅ Get single section data by ID (for edit form)
+router.get("/template/data/:celebId/:sectionId/:dataId", Template.getTemplateDataById);
+
+// ✅ Update section data
+router.post("/template/update", upload.any(), Template.updateTemplateData);
 
     module.exports = router;

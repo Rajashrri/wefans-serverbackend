@@ -23,6 +23,7 @@ const movievRoute = require("./router/moviev-router");
 const seriesRoute = require("./router/series-router");
 const electionRoute = require("./router/election-router");
 const positionsRoute = require("./router/positions-router");
+const customoptionRoute = require("./router/customoption-router");
 
 const celebratyRoute = require("./router/celebraty-router");
 const timelineRoute = require("./router/timeline-router");
@@ -50,7 +51,7 @@ const errorMiddleware1 = require("./middlewares/error-middleware");
 
 
 const corsOptions = {
-  origin: 'https://wefans-frontend.vercel.app',
+ origin: 'https://wefans-frontend.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
 };
@@ -81,6 +82,7 @@ app.use('/election', express.static(path.join(__dirname, 'public/election')));
 app.use('/positions', express.static(path.join(__dirname, 'public/positions')));
 app.use('/sectionmaster', express.static(path.join(__dirname, 'public/sectionmaster')));
 app.use('/template', express.static(path.join(__dirname, 'public/template')));
+app.use('/customoption', express.static(path.join(__dirname, 'public/customoption')));
 
 app.use('/profile', express.static(path.join(__dirname, 'public/profile')));
 app.use('/testimonial', express.static(path.join(__dirname, 'public/testimonial')));
@@ -102,6 +104,7 @@ app.use("/api/election", electionRoute);
 app.use("/api/positions", positionsRoute);
 app.use("/api/sectionmaster",sectionmasterRoute);
 app.use("/api/sectiontemplate", sectiontemplateRoute);
+app.use("/api/customoption",customoptionRoute);
 
 app.use("/api/socialLink",socialLinkRoute);
 app.use("/api/genreMaster",genreMasterRoute);
